@@ -2,83 +2,75 @@
 
 AgentFlow Studio is a full-stack starter for building and running AI-powered workflow automations. It combines a polished workflow dashboard with a Node.js execution API, persistent run logs, and a MySQL database.
 
-![AgentFlow Studio](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript) ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql) ![License](https://img.shields.io/badge/license-MIT-green)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript) ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
-- Workflow library with status, step previews, search, and execution history.
-- Create workflows from the dashboard, with configurable steps saved in MySQL.
-- Run workflows and inspect the result, status, and step-by-step logs.
-- Supported step types: AI generation, HTTP request, text transform, condition, and human approval checkpoint.
-- OpenAI-compatible Chat Completions support; a mock AI response is used if no model key is configured.
-- Sample automations for lead follow-up and support ticket triage.
-- Docker Compose for local MySQL, environment examples, and GitHub Actions CI.
+- Workflow dashboard with workflow statuses, step previews, search, and execution history.
+- Create workflows through the UI; definitions and run logs are persisted in MySQL.
+- Run workflows and inspect final output, status, and step-by-step logs.
+- Step types: AI generation, text transform, condition, HTTPS request, and human-approval checkpoint.
+- OpenAI-compatible Chat Completions support; mock AI responses work without an API key.
+- Seeded examples: **Lead Enrichment Assistant** and **Support Ticket Triage**.
+- Docker Compose, example environment configuration, and GitHub Actions CI.
 
-## Technology stack
+## Tech stack
 
-- **Frontend:** Next.js App Router, React, TypeScript, Lucide icons, custom responsive CSS.
-- **Backend:** Node.js, Express, TypeScript, Zod validation.
-- **Database:** MySQL 8.4 using `mysql2`.
+- **Frontend:** Next.js App Router, React, TypeScript, Lucide icons, responsive custom CSS.
+- **Backend:** Node.js, Express, TypeScript, Zod.
+- **Database:** MySQL 8.4 and mysql2.
 - **AI:** OpenAI-compatible Chat Completions API (optional).
-- **Local infrastructure:** Docker Compose.
+- **Dev workflow:** Docker Compose and GitHub Actions.
 
-## Repository structure
+## Repository layout
 
 ```text
 agentflow-studio/
 ├── apps/
-│   ├── web/                         # Next.js dashboard
-│   │   ├── app/                     # UI and styles
-│   │   └── lib/api.ts               # Typed API client
-│   └── api/                         # Express API and workflow engine
-│       ├── sql/schema.sql           # Tables and sample workflows
+│   ├── web/                       # Next.js dashboard
+│   │   ├── app/                   # UI, metadata and styling
+│   │   └── lib/api.ts             # Typed API client
+│   └── api/                       # Express API and workflow engine
+│       ├── sql/schema.sql         # Tables and sample workflows
 │       └── src/
-│           ├── config/              # MySQL pool
-│           ├── engine/runner.ts     # Workflow execution engine
-│           ├── routes/              # Workflow and run endpoints
-│           └── scripts/             # Database setup script
+│           ├── engine/runner.ts   # Sequential workflow runner
+│           ├── routes/            # Workflow and run endpoints
+│           ├── config/            # MySQL pool
+│           └── scripts/           # Database initialization
+├── .github/workflows/ci.yml
 ├── .env.example
 ├── docker-compose.yml
-└── .github/workflows/ci.yml
+└── README.md
 ```
 
 ## Requirements
 
-- Node.js 20 or newer and npm
+- Node.js 20+ and npm
 - Docker Desktop or a local MySQL 8 server
-- Optional: an API key for an OpenAI-compatible model endpoint
+- Optional API key for an OpenAI-compatible model endpoint
 
-## Quick start
+## Run locally
 
-### 1. Clone the repository
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/dixit2812/agentflow-studio.git
 cd agentflow-studio
-```
-
-### 2. Configure local environment
-
-```bash
 cp .env.example apps/api/.env
 cp .env.example apps/web/.env.local
 ```
 
-The API loads `apps/api/.env`. The Next.js app loads `apps/web/.env.local`. The sample configuration is for local development only. Do not commit real API keys or production secrets.
+The API reads configuration from `apps/api/.env`; Next.js reads `NEXT_PUBLIC_API_URL` from `apps/web/.env.local`. The included defaults are for local development only. Never commit real API keys or production credentials.
 
-To enable real model responses, set `OPENAI_API_KEY` in `apps/api/.env`. You may adjust `OPENAI_BASE_URL` and `OPENAI_MODEL` for a compatible provider. Without a key, AI steps return an informative mock response so you can test the workflow plumbing.
+For real AI responses, set `OPENAI_API_KEY` in `apps/api/.env`. You may also configure `OPENAI_BASE_URL` and `OPENAI_MODEL`. If the key is empty, AI steps return a mock response so you can exercise workflow persistence and logs without spending on model calls.
 
-### 3. Start MySQL
+### 2. Start MySQL
 
 ```bash
 docker compose up -d db
 ```
 
-The Compose file creates the `agentflow` database and local development user, then initializes the schema and sample workflows. MySQL initialization scripts run on the first creation of the data volume. If you change the schema and want a fresh development database, back up any data and use `docker compose down -v` before restarting; this deletes the local database volume.
-
-### 4. Start the API
-
-In a terminal:
+On first initialization, Docker loads the schema and seeds sample workflows. The database setup script can also be run explicitly:
 
 ```bash
 cd apps/api
@@ -87,11 +79,11 @@ npm run db:setup
 npm run dev
 ```
 
-The API defaults to **http://localhost:4000**. Confirm it is responding at [http://localhost:4000/api/health](http://localhost:4000/api/health).
+The API runs on http://localhost:4000 by default. Health check: http://localhost:4000/api/health.
 
-### 5. Start the web app
+### 3. Start the web app
 
-In a second terminal from the repository root:
+In another terminal from the repository root:
 
 ```bash
 cd apps/web
@@ -99,34 +91,36 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000**.
+Open http://localhost:3000.
+
+> The database user/password and database name should match the values in `apps/api/.env` and `docker-compose.yml`.
 
 ## Environment variables
 
-| Variable | Used by | Purpose |
-|---|---|---|
-| `PORT` | API | Express port (default `4000`) |
-| `CORS_ORIGIN` | API | Comma-separated allowed frontend origins |
-| `DB_HOST`, `DB_PORT` | API | MySQL host and port |
-| `DB_USER`, `DB_PASSWORD`, `DB_NAME` | API | Database credentials and database name |
-| `OPENAI_API_KEY` | API | Optional model provider key |
-| `OPENAI_BASE_URL` | API | OpenAI-compatible API base URL |
-| `OPENAI_MODEL` | API | Model name (default `gpt-4o-mini`) |
-| `NEXT_PUBLIC_API_URL` | Web | API base URL, default `http://localhost:4000/api` |
+| Variable | Purpose |
+|---|---|
+| `PORT` | Express port; defaults to `4000` |
+| `CORS_ORIGIN` | Comma-separated frontend origins allowed by CORS |
+| `DB_HOST`, `DB_PORT` | MySQL host and port |
+| `DB_USER`, `DB_PASSWORD`, `DB_NAME` | MySQL credentials and database |
+| `OPENAI_API_KEY` | Optional model provider key |
+| `OPENAI_BASE_URL` | OpenAI-compatible API base URL |
+| `OPENAI_MODEL` | Model name; defaults to `gpt-4o-mini` |
+| `NEXT_PUBLIC_API_URL` | API base URL for the frontend |
 
-## API reference
+## REST API
 
-All API routes are prefixed with `/api`.
+All routes are prefixed with `/api`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/health` | Health check |
-| GET | `/workflows` | List workflows |
+| GET | `/health` | API health check |
+| GET | `/workflows` | List all workflows |
 | POST | `/workflows` | Create a workflow |
-| GET | `/workflows/:id` | Retrieve a workflow |
-| POST | `/workflows/:id/run` | Execute an active workflow with JSON input |
-| GET | `/runs?limit=20` | List recent runs |
-| GET | `/runs/:id` | Retrieve a run and its step logs |
+| GET | `/workflows/:id` | Get a workflow by ID |
+| POST | `/workflows/:id/run` | Run an active workflow with JSON input |
+| GET | `/runs?limit=20` | List recent workflow runs |
+| GET | `/runs/:id` | Run details and per-step execution logs |
 
 ### Example: create a workflow
 
@@ -135,16 +129,14 @@ curl -X POST http://localhost:4000/api/workflows \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Meeting summary",
-    "description": "Summarize supplied meeting notes for review",
+    "description": "Summarize supplied notes for review",
     "status": "active",
     "steps": [
       {
         "id": "summary",
         "name": "Summarize notes",
         "type": "ai",
-        "config": {
-          "prompt": "Summarize the notes. Use only facts in the supplied input."
-        }
+        "config": { "prompt": "Summarize the notes using only facts in the input." }
       },
       {
         "id": "review",
@@ -156,7 +148,7 @@ curl -X POST http://localhost:4000/api/workflows \
   }'
 ```
 
-Run it by replacing `WORKFLOW_ID` with the returned ID:
+Run the created workflow with its returned ID:
 
 ```bash
 curl -X POST http://localhost:4000/api/workflows/WORKFLOW_ID/run \
@@ -164,47 +156,43 @@ curl -X POST http://localhost:4000/api/workflows/WORKFLOW_ID/run \
   -d '{"input":{"text":"Paste meeting notes here"}}'
 ```
 
-## Workflow steps
+## Workflow step types
 
-A workflow stores an ordered array of step objects:
+- **`transform`** — simple templates such as `{{input.text}}` or `{{outputs.previousStepId}}`.
+- **`ai`** — calls the configured model endpoint or returns a mock response when the API key is absent.
+- **`condition`** — checks a truthy input/output key; a false condition stops the current run.
+- **`http`** — performs a basic HTTPS GET or POST call to a configured endpoint.
+- **`approval`** — marks a run as `needs_approval` at a review checkpoint.
 
-- **`transform`** — applies simple input templates such as `{{input.text}}`.
-- **`ai`** — sends the prompt and selected context to the model endpoint, or returns a mock response when no API key is configured.
-- **`condition`** — checks whether the supplied input or a previous output key is truthy; stops the workflow if false.
-- **`http`** — makes an HTTPS GET or POST request to the configured endpoint.
-- **`approval`** — pauses execution with a `needs_approval` status for human review.
+The approval step is currently a checkpoint only; it does not yet have a UI for approving and resuming a paused run. HTTP actions should only target trusted destinations.
 
-The current approval step is a checkpoint, not a complete approval/resume user interface. HTTP integrations are basic and should only be configured against trusted destinations.
-
-## Development scripts
+## Useful scripts
 
 From `apps/api`:
-
-- `npm run dev` — run the API with reload.
-- `npm run build` — compile TypeScript to `dist/`.
-- `npm start` — start the compiled API.
-- `npm run db:setup` — initialize the schema and sample workflows.
+- `npm run dev` — start the API with reload.
+- `npm run build` — compile the API TypeScript.
+- `npm start` — start compiled API output.
+- `npm run db:setup` — initialize tables and sample workflows.
 
 From `apps/web`:
+- `npm run dev` — local Next.js server.
+- `npm run typecheck` — TypeScript check.
+- `npm run build` — production build.
+- `npm start` — serve production build.
 
-- `npm run dev` — run Next.js locally.
-- `npm run typecheck` — run the TypeScript check.
-- `npm run build` — build the production frontend.
-- `npm start` — serve the production frontend.
+GitHub Actions builds the API and typechecks/builds the frontend on pushes and pull requests to `main`.
 
-GitHub Actions runs the API build and frontend typecheck/build on pushes and pull requests to `main`.
+## Security and production checklist
 
-## Security and production readiness
+This is a starter project, not a hardened multi-tenant production system. Before public deployment or real customer data:
 
-This is a development starter, not a hardened multi-tenant production system. Before exposing it publicly or using it with real customer data:
-
-1. Add authentication, authorization, and per-workspace data isolation.
-2. Store provider credentials in a dedicated secret store; never place API keys in workflow JSON.
-3. Add strict URL allowlists, DNS/IP checks, redirect restrictions, and SSRF protection to HTTP steps.
-4. Add execution queues, rate limits, quotas, request timeouts, cancellation, and bounded retries.
-5. Implement a durable approval/resume flow before allowing sensitive external actions.
-6. Add audit logs, monitoring, database backups, and automated integration tests.
+1. Add authentication and per-workspace authorization/data isolation.
+2. Store provider credentials in a dedicated secrets store; do not put API keys in workflow JSON.
+3. Add strict URL allowlists, DNS/IP validation, redirect restrictions and SSRF protections to HTTP steps.
+4. Add execution queues, quotas, rate limits, retries, timeouts and cancellation.
+5. Implement a durable approve/reject/resume workflow before enabling sensitive external actions.
+6. Add audit logs, observability, database backups, integration tests and migrations.
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE).
