@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: API TypeScript build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: npm install
+      - name: Build API
+        working-directory: apps/api
+        run: npm run build
+
+  web:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: npm install
+      - name: Typecheck frontend
+        working-directory: apps/web
+        run: npm run typecheck
+      - name: Build frontend
+        working-directory: apps/web
+        run: npm run build
